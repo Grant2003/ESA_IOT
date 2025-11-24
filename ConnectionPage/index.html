@@ -3,15 +3,33 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Exemple MQTT</title>
+        <title>Connexion</title>
     </head>
     <body>
-        <form id="login-form">
+        <img id="logo" src="https://jduranleau.tim-cstj.ca/iot/logo.jpg" alt="ESA Logo" width="100%">
+        <div  id="redemarrage" style ="text-align: center; background-color: black;width: 100%; height: 1000px; display: none;">
+            <h1 style=" color: red;" 
+           >Redémarrage du système</h1>
+        </div>
+        <img id="defaite" src="https://jduranleau.tim-cstj.ca/iot/noir.png" alt="ESA Logo" width="100%" style="display: none;">
+
+        <div id="mainPage" style="display: none;">
+            <h1 id="temperature"></h1>
+            <h1 id="countdown"></h1>
+
+            <img src="http://appart:8082/video_feed">
+            <iframe 
+            src="https://g1.ipcamlive.com/player/player.php?alias=62cc7079ca0e9&autoplay=
+            1&mute=1&disableframecapture=1&disabletimelapseplayer=1&disabledownloadbutton
+            =1&disableplaybackspeedbutton=1&disableuserpause=1"></iframe>
+        </div>
+        <form id="login-form" style="display: none;">
             <label>Username: </label>
             <input type="text" id="username">
             <label>Password: </label>
             <input type="password" id="password">
             <input type="submit" value="submit">
+            <h1 id="feedback"></h1>
         </form>
 
         <script src="js/main.js" type="module"></script>
