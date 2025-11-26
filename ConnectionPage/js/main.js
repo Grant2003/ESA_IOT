@@ -9,6 +9,7 @@ client.on("connect", () => {
     client.subscribe("js-restart-complete")
     client.subscribe("temperature_js")
     client.subscribe("start-countdown")
+    client.subscribe("stop-countdown")
 })
 
 const form = document.getElementById("login-form");
@@ -19,6 +20,12 @@ const mainPage = document.getElementById("mainPage");
 const temperatureDisplay = document.getElementById("temperature");   
 const countdownDisplay = document.getElementById("countdown");
 const defaiteImage = document.getElementById("defaite");
+let victoire = false;
+let buttonPressed = false;
+
+// Timer variables
+let countdownTimer = null;
+let timeRemaining = 0;
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -31,29 +38,19 @@ client.on("message", (topic_buffer, message_buffer) => {
 
     console.log(`Message reçu sur le topic ${topic} : ${message}`);
     if(topic === "start-countdown"){
-        if (window.countdownInterval) {
-            clearInterval(window.countdownInterval);
-            window.countdownInterval = null;
-        }
-        let remaining = 20;
-        countdownDisplay.style.display = "block";
-        countdownDisplay.textContent = `Temps restant : ${remaining}s`;
-        window.countdownInterval = setInterval(() => {
-            remaining--;
-            if (remaining > 0) {
-                countdownDisplay.textContent = `Temps restant : ${remaining}s`;
-            } else {
-                clearInterval(window.countdownInterval);
-                window.countdownInterval = null;
-                countdownDisplay.textContent = "Temps écoulé";
-                // afficher l'image de défaite et masquer la page principale si souhaité
-                defaiteImage.style.display = "block";
-                mainPage.style.display = "none";
-            }
-        }, 1000);
+        startCountdown(20);
+    }
+    else if(topic === "stop-countdown"){
+        stopCountdown();
+        victoire = true;
     }
     else if(topic === "temperature_js"){
-        temperatureDisplay.textContent = `Température actuelle : ${message} °C`;
+        if(victoire){
+            temperatureDisplay.textContent = `Température actuelle : ${parseFloat(message)} °C`;
+        }
+        else{
+            temperatureDisplay.textContent = `Température actuelle : ${parseFloat(message) + 15} °C`;
+        }
     }
     else if(topic === "js-restart-complete" ){
         redemarrage.style.display = "none";
@@ -63,7 +60,8 @@ client.on("message", (topic_buffer, message_buffer) => {
         form.style.display = "none";
         redemarrage.style.display = "block";
     }
-    else if (topic === "js-connection" && message === "buttonPressed"){
+    else if (topic === "js-connection" && message === "buttonPressed" && !buttonPressed){
+        buttonPressed = true;
         logo.style.display = "none";
         form.style.display = "block";
     }
@@ -82,6 +80,47 @@ function submitConnexion(){
         username: username,
         password: password
     };  
+    victoire = false;
     client.publish("js-login", JSON.stringify(login));
     client.publish("js-username", username);
+}
+
+function startCountdown(seconds){
+    if(countdownTimer){
+        clearInterval(countdownTimer);
+    }
+    
+    timeRemaining = seconds;
+    updateCountdownDisplay();
+    
+    countdownTimer = setInterval(() => {
+        timeRemaining--;
+        updateCountdownDisplay();
+        
+        if(timeRemaining <= 0){
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+            defaiteImage.style.display = "block";
+            mainPage.style.display = "none";
+            client.publish("countdown-finished", "true");
+        }
+    }, 1000);
+}
+
+function stopCountdown(){
+    if(countdownTimer){
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        countdownDisplay.textContent = `Compte à rebours arrêté à ${formatTime(timeRemaining)}`;
+    }
+}
+
+function updateCountdownDisplay(){
+    countdownDisplay.textContent = `Temps restant : ${formatTime(timeRemaining)}`;
+}
+
+function formatTime(seconds){
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
